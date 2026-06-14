@@ -1,2 +1,2 @@
 import { redirect } from 'next/navigation';
-export default function PredictionsPage() { redirect('/'); }
+export default function OldPredictions() { redirect('/me'); }

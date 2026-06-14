@@ -1,59 +1,31 @@
-import { MatchPrediction, PlayerSlip } from './types';
+import { Player } from './types';
 
-// ─── Legacy storage (keeps old components happy) ──────────────────────────────
-const LEGACY_KEY = 'wc26_predictions';
+const KEY = 'acca_player_v2';
 
-function loadLegacy(): Record<string, MatchPrediction> {
-  if (typeof window === 'undefined') return {};
-  try { return JSON.parse(localStorage.getItem(LEGACY_KEY) || '{}'); } catch { return {}; }
-}
-
-export function getPredictions(): Record<string, MatchPrediction> { return loadLegacy(); }
-export function getPrediction(id: string): MatchPrediction | null { return loadLegacy()[id] ?? null; }
-export function savePrediction(p: MatchPrediction): void {
-  const all = loadLegacy(); all[p.fixtureId] = p;
-  localStorage.setItem(LEGACY_KEY, JSON.stringify(all));
-}
-export function deletePrediction(id: string): void {
-  const all = loadLegacy(); delete all[id];
-  localStorage.setItem(LEGACY_KEY, JSON.stringify(all));
-}
-export function clearAllPredictions(): void { localStorage.removeItem(LEGACY_KEY); }
-
-// ─── ACCA Battle storage ─────────────────────────────────────────────────────
-const BATTLE_KEY = 'acca_battle_v1';
-const PLAYER_KEY = 'acca_current_player';
-
-function loadBattle(): Record<string, PlayerSlip> {
-  if (typeof window === 'undefined') return {};
-  try { return JSON.parse(localStorage.getItem(BATTLE_KEY) || '{}'); } catch { return {}; }
-}
-function saveBattle(b: Record<string, PlayerSlip>): void {
-  localStorage.setItem(BATTLE_KEY, JSON.stringify(b));
-}
-
-export function getCurrentPlayer(): string | null {
+export function getStoredPlayer(): Player | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem(PLAYER_KEY);
+  try { return JSON.parse(localStorage.getItem(KEY) ?? 'null'); } catch { return null; }
 }
-export function setCurrentPlayer(name: string): void {
-  localStorage.setItem(PLAYER_KEY, name);
+
+export function storePlayer(p: Player): void {
+  localStorage.setItem(KEY, JSON.stringify(p));
 }
-export function getSlip(playerName: string): PlayerSlip {
-  return loadBattle()[playerName] ?? { playerName, picks: [], locked: false };
+
+export function clearStoredPlayer(): void {
+  localStorage.removeItem(KEY);
 }
-export function saveSlip(slip: PlayerSlip): void {
-  const b = loadBattle(); b[slip.playerName] = slip; saveBattle(b);
-}
-export function lockSlip(playerName: string): void {
-  const b = loadBattle();
-  if (b[playerName]) { b[playerName].locked = true; b[playerName].lockedAt = new Date().toISOString(); saveBattle(b); }
-}
-export function unlockSlip(playerName: string): void {
-  const b = loadBattle();
-  if (b[playerName]) { b[playerName].locked = false; delete b[playerName].lockedAt; saveBattle(b); }
-}
-export function getAllSlips(): PlayerSlip[] {
-  return Object.values(loadBattle());
-}
-export function clearBattle(): void { localStorage.removeItem(BATTLE_KEY); }
+
+// ─── Legacy stubs ───────────────────────────────────────────────────────────────────
+export function getPredictions() { return {}; }
+export function getPrediction() { return null; }
+export function savePrediction() {}
+export function deletePrediction() {}
+export function clearAllPredictions() {}
+export function getSlip() { return { playerName: '', picks: [], locked: false }; }
+export function saveSlip() {}
+export function lockSlip() {}
+export function unlockSlip() {}
+export function getAllSlips() { return []; }
+export function setCurrentPlayer() {}
+export function getCurrentPlayer() { return null; }
+export function clearBattle() {}

@@ -1,86 +1,29 @@
-import { MatchPrediction, MatchResult, ScoreBreakdown } from './types';
+export const MAX_PTS = 10;
 
-export function calculateScore(prediction: MatchPrediction, result: MatchResult): ScoreBreakdown {
-  const { score: pred, goalscorers: predGoals, yellowCards: predYellows } = prediction;
-  const { score: actual, goalscorers: actualGoals, yellowCards: actualYellows } = result;
+export function calcPoints(
+  pred: { home: number; away: number },
+  result: { homeScore: number; awayScore: number },
+): number {
+  const { home: ph, away: pa } = pred;
+  const { homeScore: rh, awayScore: ra } = result;
 
-  const details: string[] = [];
-  let base = 0;
+  // Exact score
+  if (ph === rh && pa === ra) return 10;
 
-  if (pred.home === actual.home && pred.away === actual.away) {
-    base = 10;
-    details.push('✅ Exact score! +10 pts');
-  } else {
-    const predResult = getResult(pred);
-    const actualResult = getResult(actual);
-    const totalDiff = Math.abs((pred.home + pred.away) - (actual.home + actual.away));
-    const goalDiff = Math.abs((pred.home - pred.away) - (actual.home - actual.away));
+  const predOutcome = ph > pa ? 'H' : ph < pa ? 'A' : 'D';
+  const realOutcome = rh > ra ? 'H' : rh < ra ? 'A' : 'D';
+  const totalDiff = Math.abs((ph + pa) - (rh + ra));
 
-    if (predResult === actualResult) {
-      base += 3;
-      details.push('✅ Correct result! +3 pts');
-    }
-
-    if (totalDiff === 1) {
-      base += 5;
-      details.push('🎯 Off by 1 goal total! +5 pts');
-    } else if (totalDiff === 2) {
-      base += 2;
-      details.push('🎯 Off by 2 goals total! +2 pts');
-    }
-  }
-
-  let goalscorersPoints = 0;
-  for (const pg of predGoals) {
-    const match = actualGoals.find(
-      ag => ag.team === pg.team && ag.playerName.toLowerCase() === pg.playerName.toLowerCase()
-    );
-    if (match) {
-      goalscorersPoints += 5;
-      details.push(`⚽ Correct goalscorer ${pg.playerName}! +5 pts`);
-    } else {
-      goalscorersPoints -= 3;
-      details.push(`❌ Wrong goalscorer ${pg.playerName}: -3 pts`);
-    }
-  }
-
-  let yellowCardPoints = 0;
-  for (const py of predYellows) {
-    const match = actualYellows.find(
-      ay => ay.team === py.team && ay.playerName.toLowerCase() === py.playerName.toLowerCase()
-    );
-    if (match) {
-      yellowCardPoints += 3;
-      details.push(`🟨 Correct yellow card ${py.playerName}! +3 pts`);
-    } else {
-      yellowCardPoints -= 2;
-      details.push(`❌ Wrong yellow card ${py.playerName}: -2 pts`);
-    }
-  }
-
-  return {
-    base,
-    goalscorers: goalscorersPoints,
-    yellowCards: yellowCardPoints,
-    total: base + goalscorersPoints + yellowCardPoints,
-    details,
-  };
+  let pts = 0;
+  if (predOutcome === realOutcome) pts += 3;
+  if (totalDiff === 1) pts += 5;
+  else if (totalDiff === 2) pts += 2;
+  return pts;
 }
 
-function getResult(score: { home: number; away: number }): 'H' | 'D' | 'A' {
-  if (score.home > score.away) return 'H';
-  if (score.home < score.away) return 'A';
-  return 'D';
-}
-
-export function getScoreOddsLabel(home: number, away: number, odds: number): string {
-  if (odds <= 0) return '';
-  const implied = ((1 / odds) * 100).toFixed(1);
-  return `${odds.toFixed(2)}x (${implied}% implied)`;
-}
-
-export function getResultLabel(home: number, away: number): string {
-  if (home > away) return 'Home Win';
-  if (home < away) return 'Away Win';
-  return 'Draw';
+export function pointsLabel(pts: number): string {
+  if (pts === 10) return '🎯 Exact!';
+  if (pts >= 8) return '🔥 Close!';
+  if (pts > 0) return '✓ Points';
+  return '✕ Nil';
 }
