@@ -1,14 +1,21 @@
-import { getFixtureById, ALL_FIXTURES } from '@/lib/fixtures';
+import { getFixtureById } from '@/lib/fixtures';
 import { notFound } from 'next/navigation';
 import PredictionForm from '@/components/PredictionForm';
 
-export function generateStaticParams() {
-  return ALL_FIXTURES.map(f => ({ id: f.id }));
-}
+export const dynamic = 'force-dynamic';
 
-export default function MatchPage({ params }: { params: { id: string } }) {
+type MatchPageProps = {
+  params: {
+    id: string;
+  };
+};
+
+export default function MatchPage({ params }: MatchPageProps) {
   const fixture = getFixtureById(params.id);
-  if (!fixture) notFound();
+
+  if (!fixture) {
+    notFound();
+  }
 
   return (
     <div>
